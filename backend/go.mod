@@ -1,3 +1,3 @@
 module my_wallet/backend
 
-go 1.22
+go 1.24

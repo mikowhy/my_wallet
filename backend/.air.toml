@@ -1,0 +1,19 @@
+# .air.toml - Configuration for air, the live-reloader for Go.
+
+# Working directory
+root = "."
+# Temporary directory for the built binary
+tmp_dir = "tmp"
+
+[build]
+# Command to build the application
+cmd = "go build -o ./tmp/main ./src/main.go"
+# The path to the binary to run
+bin = "./tmp/main"
+# File extensions to watch
+include_ext = ["go", "tpl", "tmpl", "html"]
+# Directories to exclude from watching
+exclude_dir = ["assets", "tmp", "vendor"]
+
+[log]
+time = true

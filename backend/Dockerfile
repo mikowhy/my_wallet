@@ -1,34 +1,26 @@
-# Stage 1: Build the Go application
-FROM golang:1.22-alpine AS builder
+# Use the golang-alpine image which is suitable for development
+FROM golang:1.24-alpine
 
-# Update packages in the builder image to mitigate vulnerabilities
-RUN apk update && apk upgrade
+# Install git (required by 'go install') and air for hot-reloading
+RUN apk add --no-cache git
+
+# Install air, a tool for live-reloading Go applications
+RUN go install github.com/air-verse/air@latest
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum to download dependencies first
-# This leverages Docker's layer caching
-COPY go.* ./
+# Copy go module files and download dependencies.
+# This step is cached by Docker if the files don't change.
+COPY go.mod go.sum* ./
 RUN go mod download
 
-# Copy the rest of the source code
-COPY src/ ./src/
+# Copy the rest of the application source code.
+# The volume mount in docker-compose.yml will keep this in sync.
+COPY . .
 
-# Build the application for a Linux environment.
-# CGO_ENABLED=0 creates a static binary. The -a flag forces rebuilding of packages that are already up-to-date.
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/server ./src/main.go
-
-# Stage 2: Create the final, minimal image
-FROM gcr.io/distroless/static-debian12
-
-WORKDIR /app
-
-# Copy the built binary from the builder stage
-COPY --from=builder /app/server .
-
-# Expose the port the application runs on.
+# Expose the port the application runs on
 EXPOSE 8080
 
-# The command to run the application
-CMD ["/app/server"]
+# The command to run the application using air for hot-reloading
+CMD ["air"]
