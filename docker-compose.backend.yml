@@ -1,12 +1,12 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: my_wallet_postgres_db
+    container_name: ${COMPOSE_PROJECT_NAME}_postgres_db
     restart: always
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=fire
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -14,22 +14,22 @@ services:
 
   backend:
     build: ./backend
-    container_name: my_wallet_backend
+    container_name: ${COMPOSE_PROJECT_NAME}_backend
     restart: always
     ports:
       - "8081:8080"
     environment:
-      - DATABASE_URL=postgres://user:password@db:5432/fire?sslmode=disable
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
     depends_on:
       - db
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: my_wallet_pgadmin
+    container_name: ${COMPOSE_PROJECT_NAME}_pgadmin
     restart: always
     environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@example.com
-      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - "5050:80"
     volumes:
