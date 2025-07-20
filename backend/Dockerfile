@@ -7,6 +7,9 @@ RUN apk add --no-cache git
 # Install air, a tool for live-reloading Go applications
 RUN go install github.com/air-verse/air@latest
 
+# Install the golang-migrate CLI tool
+RUN go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+
 # Set the working directory inside the container
 WORKDIR /app
 

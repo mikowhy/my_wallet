@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ${COMPOSE_PROJECT_NAME}_db_postgres
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: ${COMPOSE_PROJECT_NAME}_pgadmin
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+
+  backend:
+    build: ./backend
+    container_name: ${COMPOSE_PROJECT_NAME}_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable
+      - ARGON2_MEMORY=65536
+      - ARGON2_ITERATIONS=3
+      - ARGON2_PARALLELISM=2
+      - ARGON2_SALT_LENGTH=16
+      - ARGON2_KEY_LENGTH=32
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - ./backend:/app
+
+  migrate:
+    build: ./backend
+    container_name: ${COMPOSE_PROJECT_NAME}_db_migrate
+    command: >
+      /bin/sh -c "
+      /go/bin/migrate -path /app/src/migrations -database 'postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable' -verbose up
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: ${COMPOSE_PROJECT_NAME}_frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres-data:
+  pgadmin-data:
