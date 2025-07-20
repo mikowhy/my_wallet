@@ -1,0 +1,1 @@
+INSERT INTO users (email, password_hash) VALUES ('m@m.pl', '$argon2id$v=19$m=65536,t=3,p=2$3U9VgW7bgaAc317bZiO9rg$hmnKlgDEMZU+SrPXQvpviuy4aUkj4vgd8jQZ8uB6Iko');
